@@ -8,6 +8,15 @@ function clamp(x: number, min: number, max: number) {
     return Math.max(Math.min(x, max), min);
 }
 
+function cap_str_length(str: string, len: number) {
+    if (str.length > len) {
+        return str.substr(0, len - 3) + "...";
+    }
+    else {
+        return str;
+    }
+}
+
 function make_clamped_sublist_of_indices(center_index: number, domain_list_size: number, sub_list_size: number) {
     const result: number[] = [];
 
@@ -63,7 +72,7 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
         this.state = {
             announceList: [],
 
-            listPageSize: 5,
+            listPageSize: 6,
             listCurrentPage: 0,
             paginatorShowCount: 3,
         };
@@ -77,7 +86,7 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
             <div>
                 <h1>공지 사항</h1>
 
-                <Table celled>
+                <Table striped>
 
                     <Table.Header>
                         <Table.Row>
@@ -180,17 +189,17 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
 
             tableRows.push(
                 <Table.Row key={`announce_row_${one_element.id}`}>
-                    <Table.Cell>
+                    <Table.Cell width={7}>
                         <Label
                             key = {one_element.id}
                             as = {NavLink}
                             to = {`/announcements/page/${one_element.id}`}
                         >
-                            {one_element.title}
+                            {cap_str_length(one_element.title, 128)}
                         </Label>
                     </Table.Cell>
-                    <Table.Cell>{one_element.writer.name}</Table.Cell>
-                    <Table.Cell>{one_element.date}</Table.Cell>
+                    <Table.Cell width={2}>{one_element.writer.name}</Table.Cell>
+                    <Table.Cell width={2}>{one_element.date}</Table.Cell>
                 </Table.Row>
             )
         }
