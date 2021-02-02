@@ -1,6 +1,6 @@
 import * as React from 'react';
 import { Link, NavLink } from 'react-router-dom';
-import { Menu, Button, Table, Label, Icon } from 'semantic-ui-react';
+import { Menu, Button, Table, Label, Icon, Grid, Form } from 'semantic-ui-react';
 import { Announcement, fetchAnnounceList } from './client';
 
 
@@ -87,7 +87,6 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
                 <h1>공지 사항</h1>
 
                 <Table striped>
-
                     <Table.Header>
                         <Table.Row>
                             <Table.HeaderCell colSpan='3'>
@@ -125,16 +124,30 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
                     </Table.Header>
 
                     <Table.Body>{tableRows}</Table.Body>
-
                 </Table>
 
-                <input id = "search"></input>
-                <button id = "searchBtn">검색</button>
-                <Button
-                  key = "post"
-                  as = {Link}
-                  to = { '/announcements/post' }
-                >글쓰기</Button>
+                <Grid>
+                    <Grid.Row>
+                        <Grid.Column width={12}>
+                            <Form>
+                                <Form.Group widths='equal'>
+                                    <Form.Field>
+                                        <input placeholder="검색어" />
+                                    </Form.Field>
+                                    <Form.Button content="검색" attached="right" />
+                                </Form.Group>
+                            </Form>
+                        </Grid.Column>
+
+                        <Grid.Column width={4} textAlign="right">
+                            <Button
+                                key = "post"
+                                as = {Link}
+                                to = { '/announcements/post' }
+                            >글쓰기</Button>
+                        </Grid.Column>
+                    </Grid.Row>
+                </Grid>
             </div>
         )
     }
