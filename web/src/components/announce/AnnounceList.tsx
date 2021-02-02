@@ -4,6 +4,46 @@ import { Menu, Button, Table, Label, Icon } from 'semantic-ui-react';
 import { Announcement, fetchAnnounceList } from './client';
 
 
+function clamp(x: number, min: number, max: number) {
+    return Math.max(Math.min(x, max), min);
+}
+
+function make_clamped_sublist_of_indices(center_index: number, domain_list_size: number, sub_list_size: number) {
+    const result: number[] = [];
+
+    if (sub_list_size > domain_list_size) {
+        for (let i = 0; i < domain_list_size; ++i) {
+            result.push(i);
+        }
+        return result;
+    }
+    else {
+        let left_index = clamp(center_index, 0, domain_list_size - 1);
+        let right_index = left_index + 1;
+
+        while (true) {
+            if (result.length >= sub_list_size) {
+                return result;
+            }
+
+            if (left_index >= 0) {
+                result.unshift(left_index);
+                --left_index;
+            }
+
+            if (result.length >= sub_list_size) {
+                return result;
+            }
+
+            if (right_index < domain_list_size) {
+                result.push(right_index);
+                ++right_index;
+            }
+        }
+    }
+}
+
+
 interface AnnounceProps {
 
 };
@@ -13,10 +53,11 @@ interface AnnounceStats {
 
     listPageSize: number;
     listCurrentPage: number;
+    paginatorShowCount: number;
 };
 
-
 export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> {
+
     constructor(props: AnnounceProps) {
         super(props);
         this.state = {
@@ -24,6 +65,7 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
 
             listPageSize: 5,
             listCurrentPage: 0,
+            paginatorShowCount: 3,
         };
     }
 
@@ -159,7 +201,13 @@ export class AnnounceList extends React.Component<AnnounceProps, AnnounceStats> 
     private buildElement_paginator() {
         const paginatorBtnList: JSX.Element[] = [];
         const totalPagesCount = this.calcTotalPagesCount();
-        for (let i = 0; i < totalPagesCount; ++i) {
+        const displayIndices = make_clamped_sublist_of_indices(
+            this.state.listCurrentPage,
+            totalPagesCount,
+            this.state.paginatorShowCount
+        );
+
+        for (let i of displayIndices) {
             paginatorBtnList.push(
                 <Menu.Item
                     as='a'
