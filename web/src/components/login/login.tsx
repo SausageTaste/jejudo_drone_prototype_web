@@ -1,5 +1,6 @@
 import * as React from 'react'
-import { Route, withRouter } from 'react-router-dom';
+import { Link, Route } from 'react-router-dom';
+import { Button, Container } from 'semantic-ui-react';
 import { auth, provider, session, local } from './firebaseConfig'
 import { Account, fetchAccount, postAccount } from './client'
 
@@ -23,49 +24,39 @@ export class LogIn extends React.Component<loginProps, loginState> {
 
         this.SignInWithGoogle = this.SignInWithGoogle.bind(this);
         this.SignOut = this.SignOut.bind(this);
+        this.fetchAccount = this.fetchAccount.bind(this);
     }
 
-    SignInWithGoogle = () => {
-        auth.setPersistence('local').then(() => {
-            auth.signInWithPopup(provider).then(() => {
-                this.setState({user: auth.currentUser});
-                console.log("login: ", this.state.user);
-            }).then(() => {
-                this.fetchAccount(this.state.user.uid);
-                if(!this.state.account){
-                    //console.log("no account!");
-                    //window.history.pushState('v1','', '/login/create account');
-                    let content = {
-                        id: this.state.user.uid,
-                        name: this.state.user.displayName,
-                        phoneNum: '01000000000',
-                        authority: 'student',
-                        schedule: [],
-                    } as Account;
-                    
-                    postAccount(content).then(() => {
-                        this.fetchAccount(this.state.user.uid); 
-                        console.log("created!");
-                    });
-                }
-                else {
-                    //window.history.pushState('v1','', '/');
-                }
-            })
-            console.log("auth: ", auth.currentUser);
-            console.log(this.state.user);
-        })
-    }
+    SignInWithGoogle = () => <Route render = {({ history }) => (
+        <Button onClick={ () => {
+            auth.setPersistence('session').then(() => {
+                auth.signInWithPopup(provider).then(result => {
+                    this.setState({user: result.user});
+                    fetchAccount(result.user.uid).then(response => {
+                        if(response.data.account) {
+                            this.setState({ account: response.data.account });
+                            history.push('/');
+                        } else {
+                            alert('회원 정보가 없습니다.\n정보를 입력해 주세요.');
+                            history.push('/login/create account');
+                        }
+                    })
+                }).catch(err => {
+                   console.log(err);
+                });
+            });
+        }}>
+                Sign in with Google
+        </Button> )}
+    />
     SignOut = () => {
         auth.signOut().then(() => {
             this.setState({user: auth.currentUser});
-        })
+        });
         console.log(this.state.user);
     }
 
     render() {
-        console.log("current: ", this.state.user);
-        console.log("auth: ", auth.currentUser);
         return (
             <div className="LogIn">
                 <header>
@@ -78,7 +69,7 @@ export class LogIn extends React.Component<loginProps, loginState> {
                     {
                         this.state.user
                         ? <button onClick={this.SignOut}>Sign out</button>
-                        : <button onClick={this.SignInWithGoogle}>Sign in with Google</button>
+                        : <this.SignInWithGoogle/>
                     }
                 </header>
 
@@ -87,24 +78,44 @@ export class LogIn extends React.Component<loginProps, loginState> {
                     ? <></>
                     :
                     <div>
-                        <input id = 'user_email'></input>
-                        <input id = 'user_pw'></input>
-                        <button>log in</button>
-                        <button>create account</button>
+                        <Container>
+                            <input id = 'user_email'></input>
+                            <input id = 'user_pw'></input>       
+                            <button>log in</button>
+                        </Container>
+                        <Container>     
+                            <Button as={Link} to={'/login/create account'}>
+                                회원가입
+                            </Button>
+                        </Container>
                     </div>
                 }
             </div>
         );
     }
-    private fetchAccount(keyVal: string) {
-        fetchAccount(keyVal).then(response => {
-            this.setState({
-                account: response.data.account
-            });
-        }).catch(err => {
-                console.log('account fetch failed');
-
-        })
+    componentDidMount() {
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                this.setState({user: user});
+                this.render();
+            }
+        }) 
     }
 
+    private fetchAccount(keyVal: string) {
+        fetchAccount(keyVal).then(response => {
+            console.log(response.data.account);
+            if(response.data.account) {
+                console.log('login!');
+                this.setState({
+                    account: response.data.account
+                });
+            }
+            else {
+                console.log("no account!");
+            }
+        }).catch(err => {
+                console.log('account fetch failed');
+        })
+    }
 }

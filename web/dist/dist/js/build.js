@@ -87807,6 +87807,46 @@ const React = __webpack_require__(/*! react */ "../node_modules/react/index.js")
 const react_router_dom_1 = __webpack_require__(/*! react-router-dom */ "../node_modules/react-router-dom/esm/react-router-dom.js");
 const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../node_modules/semantic-ui-react/dist/es/index.js");
 const client_1 = __webpack_require__(/*! ./client */ "./components/announce/client.ts");
+function clamp(x, min, max) {
+    return Math.max(Math.min(x, max), min);
+}
+function cap_str_length(str, len) {
+    if (str.length > len) {
+        return str.substr(0, len - 3) + "...";
+    }
+    else {
+        return str;
+    }
+}
+function make_clamped_sublist_of_indices(center_index, domain_list_size, sub_list_size) {
+    const result = [];
+    if (sub_list_size > domain_list_size) {
+        for (let i = 0; i < domain_list_size; ++i) {
+            result.push(i);
+        }
+        return result;
+    }
+    else {
+        let left_index = clamp(center_index, 0, domain_list_size - 1);
+        let right_index = left_index + 1;
+        while (true) {
+            if (result.length >= sub_list_size) {
+                return result;
+            }
+            if (left_index >= 0) {
+                result.unshift(left_index);
+                --left_index;
+            }
+            if (result.length >= sub_list_size) {
+                return result;
+            }
+            if (right_index < domain_list_size) {
+                result.push(right_index);
+                ++right_index;
+            }
+        }
+    }
+}
 ;
 ;
 class AnnounceList extends React.Component {
@@ -87823,27 +87863,90 @@ class AnnounceList extends React.Component {
             });
         };
         this.state = {
-            announceList: []
+            announceList: [],
+            listPageSize: 6,
+            listCurrentPage: 0,
+            paginatorShowCount: 3,
         };
     }
     render() {
-        console.log(this.state.announceList);
-        const listItems = this.state.announceList.map(Announcement => React.createElement(semantic_ui_react_1.List.Item, { key: Announcement.id, as: react_router_dom_1.NavLink, to: `/announcements/page/${Announcement.id}` },
-            Announcement.title,
-            Announcement.date,
-            Announcement.writer.name));
+        const tableRows = this.buildElement_rowList();
+        const paginatorBtnList = this.buildElement_paginator();
         return (React.createElement("div", null,
             React.createElement("h1", null, "\uACF5\uC9C0 \uC0AC\uD56D"),
-            React.createElement(semantic_ui_react_1.List, { items: listItems }),
-            React.createElement("input", { id: "search" }),
-            React.createElement("button", { id: "searchBtn" }, "\uAC80\uC0C9"),
-            React.createElement(semantic_ui_react_1.Button, { key: "post", as: react_router_dom_1.Link, to: '/announcements/post' }, "\uAE00\uC4F0\uAE30")));
+            React.createElement(semantic_ui_react_1.Table, { striped: true },
+                React.createElement(semantic_ui_react_1.Table.Header, null,
+                    React.createElement(semantic_ui_react_1.Table.Row, null,
+                        React.createElement(semantic_ui_react_1.Table.HeaderCell, { colSpan: '3' },
+                            React.createElement(semantic_ui_react_1.Menu, { floated: 'right', pagination: true },
+                                React.createElement(semantic_ui_react_1.Menu.Item, { icon: true, as: 'a', name: `page_btn_left`, onClick: () => this.setCurrentListPage(this.state.listCurrentPage - 1) },
+                                    React.createElement(semantic_ui_react_1.Icon, { name: 'chevron left' })),
+                                paginatorBtnList,
+                                React.createElement(semantic_ui_react_1.Menu.Item, { icon: true, as: 'a', name: `page_btn_left`, onClick: () => this.setCurrentListPage(this.state.listCurrentPage + 1) },
+                                    React.createElement(semantic_ui_react_1.Icon, { name: 'chevron right' })))))),
+                React.createElement(semantic_ui_react_1.Table.Header, null,
+                    React.createElement(semantic_ui_react_1.Table.Row, null,
+                        React.createElement(semantic_ui_react_1.Table.HeaderCell, null, "\uC81C\uBAA9"),
+                        React.createElement(semantic_ui_react_1.Table.HeaderCell, null, "\uAE00\uC4F4\uC774"),
+                        React.createElement(semantic_ui_react_1.Table.HeaderCell, null, "\uB0A0\uC9DC"))),
+                React.createElement(semantic_ui_react_1.Table.Body, null, tableRows)),
+            React.createElement(semantic_ui_react_1.Grid, null,
+                React.createElement(semantic_ui_react_1.Grid.Row, null,
+                    React.createElement(semantic_ui_react_1.Grid.Column, { width: 12 },
+                        React.createElement(semantic_ui_react_1.Form, null,
+                            React.createElement(semantic_ui_react_1.Form.Group, { widths: 'equal' },
+                                React.createElement(semantic_ui_react_1.Form.Field, null,
+                                    React.createElement("input", { placeholder: "\uAC80\uC0C9\uC5B4" })),
+                                React.createElement(semantic_ui_react_1.Form.Button, { content: "\uAC80\uC0C9", attached: "right" })))),
+                    React.createElement(semantic_ui_react_1.Grid.Column, { width: 4, textAlign: "right" },
+                        React.createElement(semantic_ui_react_1.Button, { key: "post", as: react_router_dom_1.Link, to: '/announcements/post' }, "\uAE00\uC4F0\uAE30"))))));
     }
     componentDidMount() {
         this.fetchList();
         this.state.announceList.forEach(element => {
             console.log("writer: ", element.writer);
         });
+    }
+    calcTotalPagesCount() {
+        return Math.ceil(this.state.announceList.length / this.state.listPageSize);
+    }
+    setCurrentListPage(pageIndex) {
+        const totalPagesCount = this.calcTotalPagesCount();
+        if (pageIndex >= totalPagesCount) {
+            pageIndex = totalPagesCount - 1;
+        }
+        else if (pageIndex < 0) {
+            pageIndex = 0;
+        }
+        this.setState({
+            listCurrentPage: pageIndex,
+        });
+    }
+    buildElement_rowList() {
+        const tableRows = [];
+        const begin_index = this.state.listPageSize * this.state.listCurrentPage;
+        const end_index = this.state.listPageSize * (this.state.listCurrentPage + 1);
+        for (let i = begin_index; i < end_index; ++i) {
+            const one_element = this.state.announceList[this.state.announceList.length - i - 1];
+            if (undefined === one_element) {
+                continue;
+            }
+            tableRows.push(React.createElement(semantic_ui_react_1.Table.Row, { key: `announce_row_${one_element.id}` },
+                React.createElement(semantic_ui_react_1.Table.Cell, { width: 7 },
+                    React.createElement(semantic_ui_react_1.Label, { key: one_element.id, as: react_router_dom_1.NavLink, to: `/announcements/page/${one_element.id}` }, cap_str_length(one_element.title, 128))),
+                React.createElement(semantic_ui_react_1.Table.Cell, { width: 2 }, one_element.writer.name),
+                React.createElement(semantic_ui_react_1.Table.Cell, { width: 2 }, one_element.date)));
+        }
+        return tableRows;
+    }
+    buildElement_paginator() {
+        const paginatorBtnList = [];
+        const totalPagesCount = this.calcTotalPagesCount();
+        const displayIndices = make_clamped_sublist_of_indices(this.state.listCurrentPage, totalPagesCount, this.state.paginatorShowCount);
+        for (let i of displayIndices) {
+            paginatorBtnList.push(React.createElement(semantic_ui_react_1.Menu.Item, { as: 'a', key: `paginator_btn_${i}`, name: `page_btn_${i}`, active: this.state.listCurrentPage === i, onClick: () => this.setCurrentListPage(i) }, i + 1));
+        }
+        return paginatorBtnList;
     }
 }
 exports.AnnounceList = AnnounceList;
@@ -88080,19 +88183,55 @@ class AccountPage extends React.Component {
             return (React.createElement("div", null,
                 React.createElement("h1", null, "\uACC4\uC815 \uC815\uBCF4 \uC785\uB825"),
                 React.createElement(semantic_ui_react_1.Container, null,
-                    React.createElement("h3", null,
-                        "\uC774\uBA54\uC77C: ",
-                        firebaseConfig_1.auth.currentUser.email)),
+                    this.state.user ?
+                        React.createElement("div", null,
+                            React.createElement("h3", null,
+                                "\uC774\uBA54\uC77C: ",
+                                this.state.user ? firebaseConfig_1.auth.currentUser.email : null)) :
+                        React.createElement("div", null,
+                            React.createElement("span", null, "\uC774\uBA54\uC77C"),
+                            React.createElement("input", { key: 'email' }),
+                            " ",
+                            React.createElement("br", null),
+                            React.createElement("span", null, "\uBE44\uBC00\uBC88\uD638"),
+                            React.createElement("input", { key: 'password' })),
+                    React.createElement("div", null,
+                        React.createElement("span", null, "\uC774\uB984"),
+                        React.createElement("input", { key: 'name' }),
+                        " ",
+                        React.createElement("br", null),
+                        React.createElement("span", null, "\uC804\uD654\uBC88\uD638"),
+                        React.createElement("input", { key: 'phone' }),
+                        " ",
+                        React.createElement("br", null),
+                        React.createElement("span", null, "\uACFC\uC815"),
+                        React.createElement("select", { key: 'curricul' },
+                            React.createElement("option", { value: 'default' }, "--\uACFC\uC815\uC744 \uC120\uD0DD\uD558\uC138\uC694--"),
+                            React.createElement("option", { value: '' }, "\uC911\uD615"),
+                            React.createElement("option", { value: '' }, "\uC18C\uD615")))),
                 React.createElement(semantic_ui_react_1.Button, null, "\uCDE8\uC18C"),
-                React.createElement(semantic_ui_react_1.Button, null, "\uD655\uC778")));
+                React.createElement(semantic_ui_react_1.Button, { onClick: this.CreateAccount }, "\uD655\uC778")));
         };
         this.CreateAccount = () => {
+            firebaseConfig_1.auth.onAuthStateChanged(user => {
+                if (user) {
+                }
+                else {
+                }
+            });
             let accountData = {
                 id: firebaseConfig_1.auth.currentUser.uid,
                 name: "default"
             };
         };
-        this.state = {};
+        this.state = {
+            user: null
+        };
+    }
+    componentDidMount() {
+        firebaseConfig_1.auth.onAuthStateChanged(user => {
+            this.setState({ user: user });
+        });
     }
 }
 exports.AccountPage = AccountPage;
@@ -88212,6 +88351,8 @@ __exportStar(__webpack_require__(/*! ./account */ "./components/login/account.ts
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.LogIn = void 0;
 const React = __webpack_require__(/*! react */ "../node_modules/react/index.js");
+const react_router_dom_1 = __webpack_require__(/*! react-router-dom */ "../node_modules/react-router-dom/esm/react-router-dom.js");
+const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../node_modules/semantic-ui-react/dist/es/index.js");
 const firebaseConfig_1 = __webpack_require__(/*! ./firebaseConfig */ "./components/login/firebaseConfig.tsx");
 const client_1 = __webpack_require__(/*! ./client */ "./components/login/client.ts");
 class LogIn extends React.Component {
@@ -88219,29 +88360,13 @@ class LogIn extends React.Component {
         super(props);
         this.SignInWithGoogle = () => {
             firebaseConfig_1.auth.setPersistence('local').then(() => {
-                firebaseConfig_1.auth.signInWithPopup(firebaseConfig_1.provider).then(() => {
-                    this.setState({ user: firebaseConfig_1.auth.currentUser });
-                    console.log("login: ", this.state.user);
-                }).then(() => {
+                firebaseConfig_1.auth.signInWithPopup(firebaseConfig_1.provider).then(result => {
+                    this.setState({ user: result.user });
+                    console.log("login: ", this.state.user.uid);
                     this.fetchAccount(this.state.user.uid);
-                    if (!this.state.account) {
-                        let content = {
-                            id: this.state.user.uid,
-                            name: this.state.user.displayName,
-                            phoneNum: '01000000000',
-                            authority: 'student',
-                            schedule: [],
-                        };
-                        client_1.postAccount(content).then(() => {
-                            this.fetchAccount(this.state.user.uid);
-                            console.log("created!");
-                        });
-                    }
-                    else {
-                    }
+                }).catch(err => {
+                    console.log(err);
                 });
-                console.log("auth: ", firebaseConfig_1.auth.currentUser);
-                console.log(this.state.user);
             });
         };
         this.SignOut = () => {
@@ -88256,10 +88381,9 @@ class LogIn extends React.Component {
         };
         this.SignInWithGoogle = this.SignInWithGoogle.bind(this);
         this.SignOut = this.SignOut.bind(this);
+        this.fetchAccount = this.fetchAccount.bind(this);
     }
     render() {
-        console.log("current: ", this.state.user);
-        console.log("auth: ", firebaseConfig_1.auth.currentUser);
         return (React.createElement("div", { className: "LogIn" },
             React.createElement("header", null,
                 this.state.user
@@ -88269,21 +88393,56 @@ class LogIn extends React.Component {
                     : React.createElement("p", null, "Please sign in."),
                 this.state.user
                     ? React.createElement("button", { onClick: this.SignOut }, "Sign out")
-                    : React.createElement("button", { onClick: this.SignInWithGoogle }, "Sign in with Google")),
+                    : React.createElement(react_router_dom_1.Route, { render: ({ history }) => (React.createElement(semantic_ui_react_1.Button, { onClick: () => {
+                                firebaseConfig_1.auth.setPersistence('session').then(() => {
+                                    firebaseConfig_1.auth.signInWithPopup(firebaseConfig_1.provider).then(result => {
+                                        this.setState({ user: result.user });
+                                        client_1.fetchAccount(result.user.uid).then(response => {
+                                            if (response.data.account) {
+                                                this.setState({ account: response.data.account });
+                                                history.push('/');
+                                            }
+                                            else {
+                                                alert('회원 정보가 없습니다.\n정보를 입력해 주세요.');
+                                                history.push('/login/create account');
+                                            }
+                                        });
+                                    }).catch(err => {
+                                        console.log(err);
+                                    });
+                                });
+                            } }, "Sign in with Google")) })),
             this.state.user
                 ? React.createElement(React.Fragment, null)
                 :
                     React.createElement("div", null,
-                        React.createElement("input", { id: 'user_email' }),
-                        React.createElement("input", { id: 'user_pw' }),
-                        React.createElement("button", null, "log in"),
-                        React.createElement("button", null, "create account"))));
+                        React.createElement(semantic_ui_react_1.Container, null,
+                            React.createElement("input", { id: 'user_email' }),
+                            React.createElement("input", { id: 'user_pw' }),
+                            React.createElement("button", null, "log in")),
+                        React.createElement(semantic_ui_react_1.Container, null,
+                            React.createElement(semantic_ui_react_1.Button, { as: react_router_dom_1.Link, to: '/login/create account' }, "\uD68C\uC6D0\uAC00\uC785")))));
+    }
+    componentDidMount() {
+        firebaseConfig_1.auth.onAuthStateChanged(user => {
+            if (user) {
+                this.setState({ user: user });
+                this.render();
+            }
+        });
     }
     fetchAccount(keyVal) {
         client_1.fetchAccount(keyVal).then(response => {
-            this.setState({
-                account: response.data.account
-            });
+            console.log(response.data.account);
+            if (response.data.account) {
+                console.log('login!');
+                this.setState({
+                    account: response.data.account
+                });
+            }
+            else {
+                console.log("no account!");
+            }
         }).catch(err => {
             console.log('account fetch failed');
         });
@@ -88376,26 +88535,10 @@ class CalendarPage extends React.Component {
     constructor(props) {
         super(props);
         this.render = () => React.createElement(semantic_ui_react_1.Container, null,
-            React.createElement(react_calendar_1.default, { value: this.state.date, onChange: this.OnDateChange, onClickDay: this.ViewSchedule, tileContent: React.createElement(react_router_dom_1.NavLink, { to: `/schedule/reservation/${this.state.date.toDateString()}` }, "link") }));
-        this.ViewSchedule = (date) => {
-            let toStr = date.toDateString();
-            console.log("day clicked!", toStr);
-        };
-        this.OnDateChange = date => {
-            this.setState({
-                date: date
-            });
-            this.CheckTime();
-        };
+            React.createElement(react_router_dom_1.Route, { render: ({ history }) => (React.createElement(react_calendar_1.default, { onChange: value => history.push(`/schedule/reservation/${value.toDateString()}`) })) }));
         this.state = {
             date: new Date()
         };
-        this.CheckTime = this.CheckTime.bind(this);
-        this.ViewSchedule = this.ViewSchedule.bind(this);
-        this.OnDateChange = this.OnDateChange.bind(this);
-    }
-    CheckTime() {
-        console.log("calender clicked!");
     }
 }
 exports.CalendarPage = CalendarPage;
@@ -88422,6 +88565,7 @@ class PartPage extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
+            user: null,
             keyVal: ''
         };
         this.Reserve = this.Reserve.bind(this);
@@ -88431,26 +88575,46 @@ class PartPage extends React.Component {
         console.log("date: ", date);
         return (React.createElement("div", null,
             React.createElement("h2", null, date),
-            React.createElement("h3", null, login_1.auth.currentUser.displayName),
+            React.createElement("h3", null, this.state.user ? login_1.auth.currentUser.displayName : null),
             React.createElement(semantic_ui_react_1.Container, null,
-                React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('moring') }, "\uC624\uC804"),
-                React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('noon') },
-                    "\uC810\uC2EC\uC2DC\uAC04",
+                React.createElement(semantic_ui_react_1.Container, null,
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('moring') }, "\uC624\uC804")),
+                " ",
+                React.createElement("br", null),
+                React.createElement(semantic_ui_react_1.Container, null,
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('noon') }, "\uC810\uC2EC\uC2DC\uAC04"),
                     React.createElement(semantic_ui_react_1.Comment, null, "\uC218\uAC15\uC0DD\uC774 \uC801\uC740 \uACBD\uC6B0 \uC218\uC5C5\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.")),
-                React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('afternoon') }, "\uC624\uD6C4"))));
+                " ",
+                React.createElement("br", null),
+                React.createElement(semantic_ui_react_1.Container, null,
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('afternoon') }, "\uC624\uD6C4")))));
     }
     ;
+    componentDidMount() {
+        login_1.auth.onAuthStateChanged(user => {
+            this.setState({ user: user });
+        });
+    }
     Reserve(part) {
         const { date } = this.props.match.params;
         let _id = login_1.auth.currentUser.uid;
         let content = {
-            id: login_1.auth.currentUser.uid,
             date: date,
             part: part,
         };
-        client_1.postScheduletoAccount(_id, content);
-        client_1.postStudentToList(date, part, content);
-        alert("신청되었습니다.");
+        client_1.postScheduletoAccount(_id, content).then(result => {
+            if (result.data.result === "already exist") {
+                alert("이미 신청되어 있습니다.");
+            }
+            else {
+                let student = {
+                    key: _id,
+                    name: login_1.auth.currentUser.displayName,
+                };
+                client_1.postStudentToList(date, part, student);
+                alert("신청되었습니다.");
+            }
+        });
     }
 }
 exports.PartPage = PartPage;
@@ -88468,21 +88632,17 @@ exports.PartPage = PartPage;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchSchedulefromAccount = exports.fetchScheduleList = exports.postStudentToList = exports.postScheduletoAccount = void 0;
+exports.deleteStudentOfSchedule = exports.cancelScheduleOfAccount = exports.fetchSchedulefromAccount = exports.fetchStudentsList = exports.fetchScheduleList = exports.postStudentToList = exports.postScheduletoAccount = void 0;
 const clientConfig_1 = __webpack_require__(/*! ../clientConfig */ "./components/clientConfig.ts");
-const postSchedule = (payload, cancelToken = null) => {
-    return clientConfig_1.instance.post(`/schedule`, payload, {
-        cancelToken
-    });
-};
 const postStudentToList = (date, part, payload, cancelToken = null) => {
     return clientConfig_1.instance.post(`/schedule/${date}/${part}`, payload, {
         cancelToken
     });
 };
 exports.postStudentToList = postStudentToList;
-const postScheduletoAccount = (key, payload, cancelToken = null) => {
+const postScheduletoAccount = (key, payload, params = {}, cancelToken = null) => {
     return clientConfig_1.instance.post(`/accounts/${key}/schedule`, payload, {
+        params,
         cancelToken
     });
 };
@@ -88500,6 +88660,7 @@ const fetchStudentsList = (date, part, params = {}, cancelToken = null) => {
         cancelToken
     });
 };
+exports.fetchStudentsList = fetchStudentsList;
 const fetchSchedulefromAccount = (key, params = {}, cancelToken = null) => {
     return clientConfig_1.instance.get(`/accounts/${key}/schedule`, {
         params,
@@ -88507,6 +88668,18 @@ const fetchSchedulefromAccount = (key, params = {}, cancelToken = null) => {
     });
 };
 exports.fetchSchedulefromAccount = fetchSchedulefromAccount;
+const cancelScheduleOfAccount = (key, id, cancelToken = null) => {
+    return clientConfig_1.instance.delete(`/accounts/${key}/schedule/${id}`, {
+        cancelToken
+    });
+};
+exports.cancelScheduleOfAccount = cancelScheduleOfAccount;
+const deleteStudentOfSchedule = (date, part, key, cancelToken = null) => {
+    return clientConfig_1.instance.delete(`schedule/${date}/${part}/${key}`, {
+        cancelToken
+    });
+};
+exports.deleteStudentOfSchedule = deleteStudentOfSchedule;
 
 
 /***/ }),
@@ -88617,12 +88790,13 @@ class MyScheduleElement extends React.Component {
     constructor(props) {
         super(props);
         this.render = () => {
-            const listItems = this.state.schedule.map(schedule => React.createElement(semantic_ui_react_1.List.Item, null,
+            const listItems = this.state.schedule.map(schedule => React.createElement(semantic_ui_react_1.List.Item, { key: schedule.id },
                 schedule.date,
                 schedule.part,
-                React.createElement(semantic_ui_react_1.Button, { onClick: this.CancelLesson }, "\uCDE8\uC18C")));
-            return (React.createElement("div", null,
-                React.createElement(semantic_ui_react_1.List, { items: listItems })));
+                React.createElement(semantic_ui_react_1.Button, { onClick: () => this.CancelLesson(schedule.id, schedule.date, schedule.part) }, "\uCDE8\uC18C")));
+            return (React.createElement("div", null, this.state.schedule.length !== 0 ?
+                React.createElement(semantic_ui_react_1.List, { items: listItems }) :
+                React.createElement("span", null, "\uC218\uC5C5\uC774 \uC5C6\uC2B5\uB2C8\uB2E4.")));
         };
         this.state = {
             schedule: []
@@ -88635,7 +88809,7 @@ class MyScheduleElement extends React.Component {
     FetchList() {
         login_1.auth.onAuthStateChanged(user => {
             if (user) {
-                client_1.fetchSchedulefromAccount(login_1.auth.currentUser.uid).then(response => {
+                client_1.fetchSchedulefromAccount(user.uid).then(response => {
                     this.setState({ schedule: response.data.schedule });
                     console.log(this.state.schedule);
                 }).catch(err => {
@@ -88644,7 +88818,14 @@ class MyScheduleElement extends React.Component {
             }
         });
     }
-    CancelLesson() {
+    CancelLesson(id, date, part) {
+        login_1.auth.onAuthStateChanged(user => {
+            if (user) {
+                console.log("cancel schedule");
+                client_1.cancelScheduleOfAccount(user.uid, id);
+                client_1.deleteStudentOfSchedule(date, part, user.uid);
+            }
+        });
     }
 }
 exports.MyScheduleElement = MyScheduleElement;

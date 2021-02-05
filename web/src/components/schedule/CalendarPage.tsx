@@ -1,12 +1,10 @@
 import * as React from 'react';
 import Calendar from 'react-calendar';
 import { Container } from 'semantic-ui-react';
-import { NavLink, Route } from 'react-router-dom';
-import { PartPage } from './PartPage';
+import { Route } from 'react-router-dom';
 
 interface LessonProps {
     userId : string;
-
 };
 interface LessonStats {
     date;
@@ -18,36 +16,13 @@ export class CalendarPage extends React.Component<LessonProps,LessonStats> {
         this.state = {
             date: new Date()
         }
-        this.CheckTime = this.CheckTime.bind(this);
-        this.ViewSchedule = this.ViewSchedule.bind(this);
-        this.OnDateChange = this.OnDateChange.bind(this);
     }
     public render = () =>
     <Container>
+        <Route render = {({ history }) => ( 
         <Calendar
-            value = {this.state.date}
-            onChange = {this.OnDateChange}
-            onClickDay = {this.ViewSchedule}
-            tileContent = {
-                <NavLink to = { `/schedule/reservation/${this.state.date.toDateString()}` }>
-                    link
-                </NavLink>
-            }
-        />
+            onChange = {value => history.push(`/schedule/reservation/${value.toDateString()}`)}
+        />)        
+    }/>
     </Container>
-
-    private CheckTime() {
-        console.log("calender clicked!");
-    }
-    private ViewSchedule = (date:Date) => {
-        let toStr = date.toDateString();
-        console.log("day clicked!", toStr);
-        //NavLink.call(`/schedule/reservation/${this.state.date.toDateString}`);
-    }
-    private OnDateChange = date => {
-        this.setState({
-            date: date
-        })
-        this.CheckTime();
-    }
 }

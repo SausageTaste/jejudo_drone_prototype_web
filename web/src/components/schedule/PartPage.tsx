@@ -11,6 +11,7 @@ interface ScheculeProps {
     match: match<keyMatch>;
 }
 interface ScheduleStats {
+    user;
     keyVal: string;
 }
 
@@ -18,6 +19,7 @@ export class PartPage extends React.Component<ScheculeProps, ScheduleStats> {
     constructor(props: ScheculeProps) {
         super(props);
         this.state = {
+            user: null,
             keyVal : ''
         }
         this.Reserve = this.Reserve.bind(this);
@@ -29,30 +31,46 @@ export class PartPage extends React.Component<ScheculeProps, ScheduleStats> {
         return (
             <div>
                 <h2>{date}</h2>
-                <h3>{auth.currentUser.displayName}</h3>
+                <h3>{this.state.user ? auth.currentUser.displayName : null }</h3>
                 <Container>
-                    <Button onClick = {() => this.Reserve('moring')}>오전</Button>
-                    <Button onClick = {() => this.Reserve('noon')}>점심시간
-                        <Comment>
-                            수강생이 적은 경우 수업하지 않습니다.
-                        </Comment>
-                    </Button>
-                    <Button onClick = {() => this.Reserve('afternoon')}>오후</Button>
+                    <Container>
+                        <Button onClick = {() => this.Reserve('moring')}>오전</Button>
+                    </Container> <br/>
+                    <Container> 
+                        <Button onClick = {() => this.Reserve('noon')}>점심시간</Button>                            
+                        <Comment>수강생이 적은 경우 수업하지 않습니다.</Comment>
+                    </Container> <br/>
+                    <Container>
+                        <Button onClick = {() => this.Reserve('afternoon')}>오후</Button>
+                    </Container>
                 </Container>
             </div>
     )};
+    componentDidMount() {
+        auth.onAuthStateChanged(user => {
+            this.setState({user: user});
+        })
+    }
 
     private Reserve(part: string) {
         const { date } = this.props.match.params;
         let _id = auth.currentUser.uid;
         
         let content = {
-            id: auth.currentUser.uid,
             date: date,
             part: part,
         } as schedule;
-        postScheduletoAccount(_id, content);
-        postStudentToList(date, part, content);
-        alert("신청되었습니다.");
+        postScheduletoAccount(_id, content).then(result => {
+            if(result.data.result === "already exist") {
+                alert("이미 신청되어 있습니다.");
+            } else {
+                let student = {
+                    key: _id,
+                    name: auth.currentUser.displayName,
+                } as student;
+                postStudentToList(date, part, student);
+                alert("신청되었습니다.");
+            }
+        })
     }
 }
