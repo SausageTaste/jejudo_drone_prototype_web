@@ -1,8 +1,10 @@
 import * as React from 'react';
 import { Menu, Icon } from 'semantic-ui-react';
 import { Link, NavLink } from 'react-router-dom';
+import { auth } from './login'
 
 interface MainMenuState {
+    user?,
     lesson?: boolean;
 }
 
@@ -11,6 +13,7 @@ export class MainMenu extends React.Component<{}, MainMenuState> {
     constructor(props:{} ,state: MainMenuState) {
         super(props);
         this.state = {
+            user: null,
             lesson: false
         }
     }
@@ -79,5 +82,12 @@ export class MainMenu extends React.Component<{}, MainMenuState> {
                 </Menu.Item>
             </Menu>
         );
+    }
+    componentDidMount() {
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                this.setState({user: user});
+            }
+        })
     }
 }

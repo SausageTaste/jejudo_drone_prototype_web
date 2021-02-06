@@ -6,9 +6,11 @@ interface Account {
     id?: string;
     name?: string;
     authority?: string;
+    phoneNum?: string;
+    curriculum?: string;
+
     schedule?: Date[];
 
-    phoneNum?: string;
 }
 
 const fetchAccountList = (params = {}, cancelToken: CancelToken = null) :

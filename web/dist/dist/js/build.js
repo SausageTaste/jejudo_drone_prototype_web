@@ -87708,8 +87708,8 @@ const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../nod
 const schedule_1 = __webpack_require__(/*! ./schedule */ "./components/schedule/index.ts");
 const login_1 = __webpack_require__(/*! ./login */ "./components/login/index.ts");
 class SwitchBox extends React.Component {
-    constructor() {
-        super(...arguments);
+    constructor(props) {
+        super(props);
         this.render = () => (React.createElement(semantic_ui_react_1.Container, null,
             React.createElement(react_router_1.Switch, null,
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/announcements', component: announce_1.AnnounceList }),
@@ -87723,7 +87723,22 @@ class SwitchBox extends React.Component {
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/', render: () => React.createElement("div", null,
                         React.createElement("h1", null, "Main Menu"),
                         React.createElement("div", { id: "firebaseui-auth-container" },
-                            React.createElement(semantic_ui_react_1.Button, { key: 'login', as: react_router_dom_1.Link, to: '/login' }, "log in"))) }))));
+                            React.createElement(semantic_ui_react_1.Button, { key: 'login', as: react_router_dom_1.Link, to: '/login' }, this.state.user ?
+                                '회원 정보' :
+                                'log in'))) }))));
+        this.state = {
+            user: null,
+        };
+    }
+    componentDidMount() {
+        login_1.auth.onAuthStateChanged(user => {
+            if (user) {
+                this.setState({ user: user });
+            }
+            else {
+                this.setState({ user: null });
+            }
+        });
     }
 }
 exports.SwitchBox = SwitchBox;
@@ -88044,6 +88059,8 @@ class PostForm extends React.Component {
     }
     PostContents(event) {
         event.preventDefault();
+        login_1.auth.onAuthStateChanged(user => {
+        });
         const payload = {
             title: this.state.title,
             writer: {
@@ -88174,12 +88191,13 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.AccountPage = void 0;
 const React = __webpack_require__(/*! react */ "../node_modules/react/index.js");
 const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../node_modules/semantic-ui-react/dist/es/index.js");
+const react_router_dom_1 = __webpack_require__(/*! react-router-dom */ "../node_modules/react-router-dom/esm/react-router-dom.js");
 const firebaseConfig_1 = __webpack_require__(/*! ./firebaseConfig */ "./components/login/firebaseConfig.tsx");
+const client_1 = __webpack_require__(/*! ./client */ "./components/login/client.ts");
 class AccountPage extends React.Component {
     constructor(props) {
         super(props);
         this.render = () => {
-            console.log(firebaseConfig_1.auth.currentUser);
             return (React.createElement("div", null,
                 React.createElement("h1", null, "\uACC4\uC815 \uC815\uBCF4 \uC785\uB825"),
                 React.createElement(semantic_ui_react_1.Container, null,
@@ -88190,43 +88208,95 @@ class AccountPage extends React.Component {
                                 this.state.user ? firebaseConfig_1.auth.currentUser.email : null)) :
                         React.createElement("div", null,
                             React.createElement("span", null, "\uC774\uBA54\uC77C"),
-                            React.createElement("input", { key: 'email' }),
+                            React.createElement("input", { id: "email" }),
                             " ",
                             React.createElement("br", null),
                             React.createElement("span", null, "\uBE44\uBC00\uBC88\uD638"),
-                            React.createElement("input", { key: 'password' })),
+                            React.createElement("input", { id: "password" })),
                     React.createElement("div", null,
                         React.createElement("span", null, "\uC774\uB984"),
-                        React.createElement("input", { key: 'name' }),
+                        React.createElement("input", { id: "name_input" }),
                         " ",
                         React.createElement("br", null),
                         React.createElement("span", null, "\uC804\uD654\uBC88\uD638"),
-                        React.createElement("input", { key: 'phone' }),
+                        React.createElement("input", { id: "phone" }),
                         " ",
                         React.createElement("br", null),
                         React.createElement("span", null, "\uACFC\uC815"),
-                        React.createElement("select", { key: 'curricul' },
-                            React.createElement("option", { value: 'default' }, "--\uACFC\uC815\uC744 \uC120\uD0DD\uD558\uC138\uC694--"),
-                            React.createElement("option", { value: '' }, "\uC911\uD615"),
-                            React.createElement("option", { value: '' }, "\uC18C\uD615")))),
-                React.createElement(semantic_ui_react_1.Button, null, "\uCDE8\uC18C"),
-                React.createElement(semantic_ui_react_1.Button, { onClick: this.CreateAccount }, "\uD655\uC778")));
+                        React.createElement("select", { id: "curriculum" },
+                            React.createElement("option", { value: "default" }, "--\uACFC\uC815\uC744 \uC120\uD0DD\uD558\uC138\uC694--"),
+                            React.createElement("option", { value: "" }, "\uC911\uD615"),
+                            React.createElement("option", { value: "" }, "\uC18C\uD615")))),
+                React.createElement(this.cancelButton, null),
+                React.createElement(this.CreateAccount, null)));
         };
-        this.CreateAccount = () => {
-            firebaseConfig_1.auth.onAuthStateChanged(user => {
-                if (user) {
-                }
-                else {
-                }
-            });
-            let accountData = {
-                id: firebaseConfig_1.auth.currentUser.uid,
-                name: "default"
-            };
-        };
+        this.CreateAccount = () => React.createElement(react_router_dom_1.Route, { render: ({ history }) => React.createElement(semantic_ui_react_1.Button, { onClick: () => {
+                    let _name = document.getElementById("name_input").value;
+                    console.log(_name);
+                    let _phoneNum = document.querySelector('#phone').value;
+                    let _curriculum = document.querySelector('#curriculum').value;
+                    firebaseConfig_1.auth.onAuthStateChanged(user => {
+                        if (user) {
+                            this.setState({
+                                account: {
+                                    id: user.uid,
+                                    name: _name,
+                                    phoneNum: _phoneNum,
+                                    curriculum: _curriculum,
+                                }
+                            });
+                            client_1.postAccount(this.state.account).then(() => {
+                                alert('계정이 생성되었습니다.');
+                                history.push('/');
+                            });
+                        }
+                        else {
+                            let _email = document.querySelector('#email').value;
+                            let _password = document.querySelector('#password').value;
+                            firebaseConfig_1.auth.createUserWithEmailAndPassword(_email, _password).then(result => {
+                                this.setState({
+                                    account: {
+                                        id: result.user.uid,
+                                        name: _name,
+                                        phoneNum: _phoneNum,
+                                        curriculum: _curriculum,
+                                    }
+                                });
+                                client_1.postAccount(this.state.account).then(() => {
+                                    alert('계정이 생성되었습니다.');
+                                    history.push('/');
+                                });
+                            });
+                        }
+                    });
+                } }, "\uD655\uC778") });
+        this.cancelButton = () => React.createElement(react_router_dom_1.Route, { render: ({ history }) => React.createElement(semantic_ui_react_1.Button, { onClick: () => {
+                    firebaseConfig_1.auth.onAuthStateChanged(user => {
+                        if (user) {
+                            user.delete().then(() => {
+                                history.push('/');
+                            }).catch(err => {
+                                console.log('delete failed');
+                            });
+                        }
+                        else {
+                            history.push('/');
+                        }
+                    });
+                } }, "\uCDE8\uC18C") });
         this.state = {
-            user: null
+            user: null,
+            email: '',
+            password: '',
+            account: {
+                name: '',
+                phoneNum: '',
+                curriculum: '',
+                authority: 'student',
+            }
         };
+        this.CreateAccount = this.CreateAccount.bind(this);
+        this.cancelButton = this.cancelButton.bind(this);
     }
     componentDidMount() {
         firebaseConfig_1.auth.onAuthStateChanged(user => {
@@ -88358,17 +88428,25 @@ const client_1 = __webpack_require__(/*! ./client */ "./components/login/client.
 class LogIn extends React.Component {
     constructor(props) {
         super(props);
-        this.SignInWithGoogle = () => {
-            firebaseConfig_1.auth.setPersistence('local').then(() => {
-                firebaseConfig_1.auth.signInWithPopup(firebaseConfig_1.provider).then(result => {
-                    this.setState({ user: result.user });
-                    console.log("login: ", this.state.user.uid);
-                    this.fetchAccount(this.state.user.uid);
-                }).catch(err => {
-                    console.log(err);
-                });
-            });
-        };
+        this.SignInWithGoogle = () => React.createElement(react_router_dom_1.Route, { render: ({ history }) => (React.createElement(semantic_ui_react_1.Button, { onClick: () => {
+                    firebaseConfig_1.auth.setPersistence('session').then(() => {
+                        firebaseConfig_1.auth.signInWithPopup(firebaseConfig_1.provider).then(result => {
+                            this.setState({ user: result.user });
+                            client_1.fetchAccount(result.user.uid).then(response => {
+                                if (response.data.account) {
+                                    this.setState({ account: response.data.account });
+                                    history.push('/');
+                                }
+                                else {
+                                    alert('회원 정보가 없습니다.\n정보를 입력해 주세요.');
+                                    history.push('/login/create account');
+                                }
+                            });
+                        }).catch(err => {
+                            console.log(err);
+                        });
+                    });
+                } }, "Sign in with Google")) });
         this.SignOut = () => {
             firebaseConfig_1.auth.signOut().then(() => {
                 this.setState({ user: firebaseConfig_1.auth.currentUser });
@@ -88393,25 +88471,7 @@ class LogIn extends React.Component {
                     : React.createElement("p", null, "Please sign in."),
                 this.state.user
                     ? React.createElement("button", { onClick: this.SignOut }, "Sign out")
-                    : React.createElement(react_router_dom_1.Route, { render: ({ history }) => (React.createElement(semantic_ui_react_1.Button, { onClick: () => {
-                                firebaseConfig_1.auth.setPersistence('session').then(() => {
-                                    firebaseConfig_1.auth.signInWithPopup(firebaseConfig_1.provider).then(result => {
-                                        this.setState({ user: result.user });
-                                        client_1.fetchAccount(result.user.uid).then(response => {
-                                            if (response.data.account) {
-                                                this.setState({ account: response.data.account });
-                                                history.push('/');
-                                            }
-                                            else {
-                                                alert('회원 정보가 없습니다.\n정보를 입력해 주세요.');
-                                                history.push('/login/create account');
-                                            }
-                                        });
-                                    }).catch(err => {
-                                        console.log(err);
-                                    });
-                                });
-                            } }, "Sign in with Google")) })),
+                    : React.createElement(this.SignInWithGoogle, null)),
             this.state.user
                 ? React.createElement(React.Fragment, null)
                 :
@@ -88467,10 +88527,12 @@ exports.MainMenu = void 0;
 const React = __webpack_require__(/*! react */ "../node_modules/react/index.js");
 const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../node_modules/semantic-ui-react/dist/es/index.js");
 const react_router_dom_1 = __webpack_require__(/*! react-router-dom */ "../node_modules/react-router-dom/esm/react-router-dom.js");
+const login_1 = __webpack_require__(/*! ./login */ "./components/login/index.ts");
 class MainMenu extends React.Component {
     constructor(props, state) {
         super(props);
         this.state = {
+            user: null,
             lesson: false
         };
     }
@@ -88507,6 +88569,13 @@ class MainMenu extends React.Component {
                         React.createElement("div", { id: "schedule" },
                             React.createElement(semantic_ui_react_1.Menu.Menu, null,
                                 React.createElement(semantic_ui_react_1.Menu.Menu, null, lessonMenu.map(item => React.createElement(semantic_ui_react_1.Menu.Item, { key: item, as: react_router_dom_1.NavLink, to: { pathname: `/schedule/${item}` } }, lessonMenu_kr.get(item)))))))))));
+    }
+    componentDidMount() {
+        login_1.auth.onAuthStateChanged(user => {
+            if (user) {
+                this.setState({ user: user });
+            }
+        });
     }
 }
 exports.MainMenu = MainMenu;

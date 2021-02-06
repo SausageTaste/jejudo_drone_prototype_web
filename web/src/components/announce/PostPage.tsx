@@ -56,6 +56,9 @@ export class PostForm extends React.Component<PostProps, PostState> {
     }
     public PostContents(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        auth.onAuthStateChanged(user => {
+            
+        })
         const payload = {
             title: this.state.title,
             writer: {
