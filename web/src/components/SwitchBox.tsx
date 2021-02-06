@@ -5,7 +5,7 @@ import * as Firebaseui from 'firebaseui'
 import { BrowserRouter, Redirect, Route, Link } from 'react-router-dom';
 import { AnnounceList, AnnouncePage, PostForm } from './announce';
 import { Button, Container } from 'semantic-ui-react';
-import { CalendarPage, PartPage, MyScheduleList } from './schedule';
+import { CalendarPage, CalendarListPage, PartPage, PartListPage, MyScheduleList } from './schedule';
 import { auth, LogIn, AccountPage } from './login'
 
 interface boxprops {
@@ -49,6 +49,14 @@ export class SwitchBox extends React.Component<boxprops, boxstate> {
                 <Route
                     exact = {true} path = '/schedule/my schedule'
                     component = { MyScheduleList }
+                />
+                <Route
+                    exact = {true} path = '/schedule/list'
+                    component = { CalendarListPage }
+                />
+                <Route
+                    exact = {true} path = '/schedule/list/:date'
+                    component = { PartListPage }
                 />
                 <Route
                     exact = {true} path = '/login'

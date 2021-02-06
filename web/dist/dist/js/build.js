@@ -87718,6 +87718,8 @@ class SwitchBox extends React.Component {
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/schedule/reservation', component: schedule_1.CalendarPage }),
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/schedule/reservation/:date', component: schedule_1.PartPage }),
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/schedule/my schedule', component: schedule_1.MyScheduleList }),
+                React.createElement(react_router_dom_1.Route, { exact: true, path: '/schedule/list', component: schedule_1.CalendarListPage }),
+                React.createElement(react_router_dom_1.Route, { exact: true, path: '/schedule/list/:date', component: schedule_1.PartListPage }),
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/login', component: login_1.LogIn }),
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/login/create account', component: login_1.AccountPage }),
                 React.createElement(react_router_dom_1.Route, { exact: true, path: '/', render: () => React.createElement("div", null,
@@ -88405,6 +88407,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(__webpack_require__(/*! ./firebaseConfig */ "./components/login/firebaseConfig.tsx"), exports);
 __exportStar(__webpack_require__(/*! ./login */ "./components/login/login.tsx"), exports);
 __exportStar(__webpack_require__(/*! ./account */ "./components/login/account.tsx"), exports);
+__exportStar(__webpack_require__(/*! ./client */ "./components/login/client.ts"), exports);
 
 
 /***/ }),
@@ -88549,11 +88552,13 @@ class MainMenu extends React.Component {
     render() {
         const lessonMenu = [
             'reservation',
-            'my schedule'
+            'my schedule',
+            'list'
         ];
         const lessonMenu_kr = new Map([
             ['reservation', '예약'],
-            ['my schedule', '나의 수업']
+            ['my schedule', '나의 수업'],
+            ['list', '명단']
         ]);
         return (React.createElement(semantic_ui_react_1.Menu, { inverted: true, vertical: true, fixed: 'left' },
             React.createElement(semantic_ui_react_1.Menu.Item, { as: react_router_dom_1.Link, to: '/' },
@@ -88579,6 +88584,38 @@ class MainMenu extends React.Component {
     }
 }
 exports.MainMenu = MainMenu;
+
+
+/***/ }),
+
+/***/ "./components/schedule/CalendarListPage.tsx":
+/*!**************************************************!*\
+  !*** ./components/schedule/CalendarListPage.tsx ***!
+  \**************************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.CalendarListPage = void 0;
+const React = __webpack_require__(/*! react */ "../node_modules/react/index.js");
+const react_calendar_1 = __webpack_require__(/*! react-calendar */ "../node_modules/react-calendar/dist/esm/index.js");
+const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../node_modules/semantic-ui-react/dist/es/index.js");
+const react_router_dom_1 = __webpack_require__(/*! react-router-dom */ "../node_modules/react-router-dom/esm/react-router-dom.js");
+;
+;
+class CalendarListPage extends React.Component {
+    constructor(props) {
+        super(props);
+        this.render = () => React.createElement(semantic_ui_react_1.Container, null,
+            React.createElement(react_router_dom_1.Route, { render: ({ history }) => (React.createElement(react_calendar_1.default, { onChange: value => history.push(`/schedule/list/${value.toDateString()}`) })) }));
+        this.state = {
+            date: new Date()
+        };
+    }
+}
+exports.CalendarListPage = CalendarListPage;
 
 
 /***/ }),
@@ -88615,6 +88652,73 @@ exports.CalendarPage = CalendarPage;
 
 /***/ }),
 
+/***/ "./components/schedule/PartListPage.tsx":
+/*!**********************************************!*\
+  !*** ./components/schedule/PartListPage.tsx ***!
+  \**********************************************/
+/*! no static exports found */
+/***/ (function(module, exports, __webpack_require__) {
+
+"use strict";
+
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.PartListPage = void 0;
+const React = __webpack_require__(/*! react */ "../node_modules/react/index.js");
+const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../node_modules/semantic-ui-react/dist/es/index.js");
+const client_1 = __webpack_require__(/*! ./client */ "./components/schedule/client.ts");
+class PartListPage extends React.Component {
+    constructor(props) {
+        super(props);
+        this.state = {
+            selected: '',
+            studentsList: null
+        };
+        this.fetchStudentsList = this.fetchStudentsList.bind(this);
+    }
+    render() {
+        const { date } = this.props.match.params;
+        console.log("date: ", date);
+        return (React.createElement("div", null,
+            React.createElement("h2", null, date),
+            React.createElement(semantic_ui_react_1.Container, null,
+                React.createElement(semantic_ui_react_1.Container, null,
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.fetchStudentsList('morning') }, "\uC624\uC804")),
+                " ",
+                React.createElement("br", null),
+                React.createElement(semantic_ui_react_1.Container, null,
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.fetchStudentsList('noon') }, "\uC810\uC2EC\uC2DC\uAC04")),
+                " ",
+                React.createElement("br", null),
+                React.createElement(semantic_ui_react_1.Container, null,
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.fetchStudentsList('afternoon') }, "\uC624\uD6C4"))),
+            this.state.selected !== '' ?
+                React.createElement("div", null,
+                    React.createElement("h2", null, this.state.selected),
+                    this.state.studentsList.length > 0 ?
+                        React.createElement(semantic_ui_react_1.List, { items: this.state.studentsList.map(element => React.createElement(semantic_ui_react_1.ListItem, null, element.name)) }) :
+                        React.createElement("span", null, "\uC2E0\uCCAD\uC790\uAC00 \uC5C6\uC2B5\uB2C8\uB2E4.")) :
+                React.createElement("span", null, "\uC2DC\uAC04\uB300\uB97C \uC120\uD0DD\uD558\uC138\uC694.")));
+    }
+    ;
+    componentDidMount() {
+    }
+    fetchStudentsList(part) {
+        let { date } = this.props.match.params;
+        client_1.fetchStudentsList(date, part).then(response => {
+            this.setState({
+                selected: part,
+                studentsList: response.data.list
+            });
+        }).catch(err => {
+            console.log(err);
+        });
+    }
+}
+exports.PartListPage = PartListPage;
+
+
+/***/ }),
+
 /***/ "./components/schedule/PartPage.tsx":
 /*!******************************************!*\
   !*** ./components/schedule/PartPage.tsx ***!
@@ -88635,6 +88739,7 @@ class PartPage extends React.Component {
         super(props);
         this.state = {
             user: null,
+            account: null,
             keyVal: ''
         };
         this.Reserve = this.Reserve.bind(this);
@@ -88662,11 +88767,14 @@ class PartPage extends React.Component {
     componentDidMount() {
         login_1.auth.onAuthStateChanged(user => {
             this.setState({ user: user });
+            login_1.fetchAccount(user.uid).then(response => {
+                this.setState({ account: response.data.account });
+            });
         });
     }
     Reserve(part) {
         const { date } = this.props.match.params;
-        let _id = login_1.auth.currentUser.uid;
+        let _id = this.state.user.uid;
         let content = {
             date: date,
             part: part,
@@ -88678,7 +88786,7 @@ class PartPage extends React.Component {
             else {
                 let student = {
                     key: _id,
-                    name: login_1.auth.currentUser.displayName,
+                    name: this.state.account.name,
                 };
                 client_1.postStudentToList(date, part, student);
                 alert("신청되었습니다.");
@@ -88774,9 +88882,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(__webpack_require__(/*! ./CalendarPage */ "./components/schedule/CalendarPage.tsx"), exports);
+__exportStar(__webpack_require__(/*! ./CalendarListPage */ "./components/schedule/CalendarListPage.tsx"), exports);
 __exportStar(__webpack_require__(/*! ./my_schedule */ "./components/schedule/my_schedule.tsx"), exports);
 __exportStar(__webpack_require__(/*! ./my_schedule_element */ "./components/schedule/my_schedule_element.tsx"), exports);
 __exportStar(__webpack_require__(/*! ./PartPage */ "./components/schedule/PartPage.tsx"), exports);
+__exportStar(__webpack_require__(/*! ./PartListPage */ "./components/schedule/PartListPage.tsx"), exports);
 
 
 /***/ }),

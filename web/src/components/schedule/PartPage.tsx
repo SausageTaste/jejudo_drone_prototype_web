@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Container, Button, Comment } from 'semantic-ui-react';
 import { match } from 'react-router-dom';
 import { schedule, student, postScheduletoAccount, postStudentToList } from './client';
-import { auth } from '../login'
+import { auth, Account, fetchAccount } from '../login'
 
 interface keyMatch {
     date: string;
@@ -11,8 +11,9 @@ interface ScheculeProps {
     match: match<keyMatch>;
 }
 interface ScheduleStats {
-    user;
-    keyVal: string;
+    user?;
+    account?: Account;
+    keyVal?: string;
 }
 
 export class PartPage extends React.Component<ScheculeProps, ScheduleStats> {
@@ -20,6 +21,7 @@ export class PartPage extends React.Component<ScheculeProps, ScheduleStats> {
         super(props);
         this.state = {
             user: null,
+            account: null,
             keyVal : ''
         }
         this.Reserve = this.Reserve.bind(this);
@@ -49,12 +51,15 @@ export class PartPage extends React.Component<ScheculeProps, ScheduleStats> {
     componentDidMount() {
         auth.onAuthStateChanged(user => {
             this.setState({user: user});
+            fetchAccount(user.uid).then(response => {
+                this.setState({account: response.data.account});
+            })
         })
     }
 
     private Reserve(part: string) {
         const { date } = this.props.match.params;
-        let _id = auth.currentUser.uid;
+        let _id = this.state.user.uid;
         
         let content = {
             date: date,
@@ -66,7 +71,7 @@ export class PartPage extends React.Component<ScheculeProps, ScheduleStats> {
             } else {
                 let student = {
                     key: _id,
-                    name: auth.currentUser.displayName,
+                    name: this.state.account.name,
                 } as student;
                 postStudentToList(date, part, student);
                 alert("신청되었습니다.");

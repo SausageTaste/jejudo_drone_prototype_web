@@ -1,26 +1,30 @@
 import * as React from 'react';
 import { List } from 'semantic-ui-react';
-import { auth } from '../login'
+import { auth, Account, fetchAccount } from '../login'
 import { MyScheduleElement } from './my_schedule_element';
 
 interface ScheduleProps {
 
 };
 interface ScheduleStats {
-    user;
+    user?;
+    account?: Account;
 };
 
 export class MyScheduleList extends React.Component<ScheduleProps, ScheduleStats> {
     constructor(props: ScheduleProps) {
         super(props);
-        this.state = this.getAuth();
+        this.state = {
+            user: null,
+            account: null,
+        }
     }
     public render() {
         return  (
             <div>
                 <h1>나의 수업</h1>
-                <h2>{   this.state.user ?
-                                auth.currentUser.displayName
+                <h2>{   this.state.account ?
+                                this.state.account.name
                             :   "로그인 하십시오." }</h2>
                 <MyScheduleElement/>
             </div>
@@ -32,24 +36,16 @@ export class MyScheduleList extends React.Component<ScheduleProps, ScheduleStats
     componentDidMount() {
         auth.onAuthStateChanged(user => {
             if(user) {
-                console.log(auth.currentUser);
-                this.setState({user: auth.currentUser});
+                fetchAccount(user.uid).then(result => {
+                    this.setState({
+                        user: user,
+                        account: result.data.account,
+                    })
+                })
             }
             else {
                 
             }
         })
     }
-    getAuth() :  ScheduleStats  {
-        let result = { user: null } as ScheduleStats;
-        auth.onAuthStateChanged(user => {
-            if(user) {
-                result.user = auth.currentUser;
-            }
-            else {
-
-            }
-        });
-        return result;
-    };
 }

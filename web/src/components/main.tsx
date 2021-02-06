@@ -34,11 +34,13 @@ export class MainMenu extends React.Component<{}, MainMenuState> {
     public render() {
         const lessonMenu = [
             'reservation',
-            'my schedule'
+            'my schedule',
+            'list'
         ];
         const lessonMenu_kr = new Map([
             ['reservation', '예약' ],
-            ['my schedule', '나의 수업']
+            ['my schedule', '나의 수업'],
+            ['list', '명단']
         ]);
 
         return(

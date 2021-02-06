@@ -61,8 +61,8 @@ export class LogIn extends React.Component<loginProps, loginState> {
             <div className="LogIn">
                 <header>
                     {
-                        this.state.user
-                        ? <p>Hello, {this.state.user.displayName}</p>
+                        this.state.account
+                        ? <p>Hello, {this.state.account.name}</p>
                         : <p>Please sign in.</p>
                     }
 
@@ -96,8 +96,13 @@ export class LogIn extends React.Component<loginProps, loginState> {
     componentDidMount() {
         auth.onAuthStateChanged(user => {
             if(user) {
-                this.setState({user: user});
-                this.render();
+                fetchAccount(user.uid).then(result => {
+                    this.setState({
+                        user: user,
+                        account: result.data.account,
+                    });
+                    this.render();
+                })
             }
         }) 
     }

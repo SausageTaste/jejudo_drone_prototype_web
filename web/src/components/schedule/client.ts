@@ -8,7 +8,6 @@ interface schedule {
     part?: string;
 }
 interface student {
-    key?: string;
     name?: string;
 }
 
