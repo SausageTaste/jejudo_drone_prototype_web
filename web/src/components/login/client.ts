@@ -33,5 +33,11 @@ Promise<AxiosResponse<{ account: Account }>> => {
         cancelToken
     });
 }
+const deleteAccount = (key: string, cancelToken: CancelToken = null) :
+Promise<AxiosResponse<{result: string}>> => {
+    return instance.delete(`/accounts/${key}`, {
+        cancelToken
+    });
+}
 
-export { Account, fetchAccountList, postAccount, fetchAccount }
+export { Account, fetchAccountList, postAccount, fetchAccount, deleteAccount }

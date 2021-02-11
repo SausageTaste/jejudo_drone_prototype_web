@@ -44,6 +44,9 @@ export class MyScheduleElement extends React.Component<ScheduleElementProps,Sche
     public componentDidMount() {
         this.FetchList();
     }
+    public componentDidUpdate() {
+        this.render();
+    }
 
     private FetchList() {
         auth.onAuthStateChanged(user => {
@@ -63,6 +66,7 @@ export class MyScheduleElement extends React.Component<ScheduleElementProps,Sche
                 console.log("cancel schedule");
                 cancelScheduleOfAccount(user.uid, id);
                 deleteStudentOfSchedule(date, part, user.uid);
+                this.FetchList();
             }
         });
     }

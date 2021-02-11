@@ -2,7 +2,7 @@ import * as React from 'react';
 import { Segment, Button, Form, TextArea } from 'semantic-ui-react';
 import  TextareaAutosize  from 'react-textarea-autosize';
 import { Announcement, postAnnouncement } from './client';
-import { auth } from '../login';
+import { auth, Account, fetchAccount } from '../login';
 
 interface PostProps {
 
@@ -11,6 +11,7 @@ interface PostState {
     title : string;
     body? : string;
     attachments? : string[]; //directory
+    account? : Account;
 }
 
 export class PostForm extends React.Component<PostProps, PostState> {
@@ -19,7 +20,8 @@ export class PostForm extends React.Component<PostProps, PostState> {
         this.state = {
             title : '',
             body : '',
-            attachments : []
+            attachments : [],
+            account: null
         }
         this.handleNameChange = this.handleNameChange.bind(this);
         this.handleBodyChange = this.handleBodyChange.bind(this);
@@ -56,13 +58,11 @@ export class PostForm extends React.Component<PostProps, PostState> {
     }
     public PostContents(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        auth.onAuthStateChanged(user => {
-            
-        })
+        
         const payload = {
             title: this.state.title,
             writer: {
-                name: auth.currentUser.displayName,
+                name: this.state.account.name,
                 id: auth.currentUser.uid,
             },
             body: this.state.body,
@@ -74,6 +74,20 @@ export class PostForm extends React.Component<PostProps, PostState> {
             });
         }).catch(err => {
             console.log("post failed!");
+            console.log(err);
+        })
+    }
+    componentDidMount() {
+        auth.onAuthStateChanged(user => {
+            if(user) {
+                this.fetchAccount(user.uid);
+            }
+        })
+    }
+    fetchAccount(key: string) {
+        fetchAccount(key).then(result => {
+            this.setState({account: result.data.account});
+        }).catch(err => {
             console.log(err);
         })
     }

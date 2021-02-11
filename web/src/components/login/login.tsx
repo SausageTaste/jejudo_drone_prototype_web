@@ -2,7 +2,7 @@ import * as React from 'react'
 import { Link, Route } from 'react-router-dom';
 import { Button, Container } from 'semantic-ui-react';
 import { auth, provider, session, local } from './firebaseConfig'
-import { Account, fetchAccount, postAccount } from './client'
+import { Account, fetchAccount, postAccount, deleteAccount } from './client'
 
 interface loginProps {
     
@@ -46,8 +46,26 @@ export class LogIn extends React.Component<loginProps, loginState> {
                 });
             });
         }}>
-                Sign in with Google
+            Sign in with Google
         </Button> )}
+    />
+    SignIn = () => <Route render = {({ history }) => (
+        <Button onClick = {() => {
+            let _id = (document.getElementById('user_email') as HTMLInputElement).value;
+            let _pw = (document.getElementById('user_pw') as HTMLInputElement).value;
+
+            auth.signInWithEmailAndPassword(_id, _pw).then(result => {
+                fetchAccount(result.user.uid).then(response => {
+                    this.setState({
+                        user: result.user,
+                        account: response.data.account,
+                    });
+                    history.push('/');
+                });
+            });
+        }}>
+            Log In
+        </Button>)}
     />
     SignOut = () => {
         auth.signOut().then(() => {
@@ -81,7 +99,7 @@ export class LogIn extends React.Component<loginProps, loginState> {
                         <Container>
                             <input id = 'user_email'></input>
                             <input id = 'user_pw'></input>       
-                            <button>log in</button>
+                            <this.SignIn/>
                         </Container>
                         <Container>     
                             <Button as={Link} to={'/login/create account'}>
@@ -120,7 +138,12 @@ export class LogIn extends React.Component<loginProps, loginState> {
                 console.log("no account!");
             }
         }).catch(err => {
-                console.log('account fetch failed');
+                console.log('account fetch failed:', err);
+        })
+    }
+    private deleteAccount(keyVal: string) {
+        deleteAccount(keyVal).then(result => {
+            
         })
     }
 }

@@ -88045,7 +88045,8 @@ class PostForm extends React.Component {
         this.state = {
             title: '',
             body: '',
-            attachments: []
+            attachments: [],
+            account: null
         };
         this.handleNameChange = this.handleNameChange.bind(this);
         this.handleBodyChange = this.handleBodyChange.bind(this);
@@ -88061,12 +88062,10 @@ class PostForm extends React.Component {
     }
     PostContents(event) {
         event.preventDefault();
-        login_1.auth.onAuthStateChanged(user => {
-        });
         const payload = {
             title: this.state.title,
             writer: {
-                name: login_1.auth.currentUser.displayName,
+                name: this.state.account.name,
                 id: login_1.auth.currentUser.uid,
             },
             body: this.state.body,
@@ -88078,6 +88077,20 @@ class PostForm extends React.Component {
             });
         }).catch(err => {
             console.log("post failed!");
+            console.log(err);
+        });
+    }
+    componentDidMount() {
+        login_1.auth.onAuthStateChanged(user => {
+            if (user) {
+                this.fetchAccount(user.uid);
+            }
+        });
+    }
+    fetchAccount(key) {
+        login_1.fetchAccount(key).then(result => {
+            this.setState({ account: result.data.account });
+        }).catch(err => {
             console.log(err);
         });
     }
@@ -88196,47 +88209,66 @@ const semantic_ui_react_1 = __webpack_require__(/*! semantic-ui-react */ "../nod
 const react_router_dom_1 = __webpack_require__(/*! react-router-dom */ "../node_modules/react-router-dom/esm/react-router-dom.js");
 const firebaseConfig_1 = __webpack_require__(/*! ./firebaseConfig */ "./components/login/firebaseConfig.tsx");
 const client_1 = __webpack_require__(/*! ./client */ "./components/login/client.ts");
+const INPUT_FIELD_EMAIL = "input_email";
+const INPUT_FIELD_NAME = "input_name";
+const INPUT_FIELD_PASSWD = "input_passwd";
+const INPUT_FIELD_PHONE = "input_phone";
+const DROPDOWN_COURSE_VALUE_SMALL = 1;
+const DROPDOWN_COURSE_VALUE_MIDDLE = 2;
 class AccountPage extends React.Component {
     constructor(props) {
         super(props);
         this.render = () => {
             return (React.createElement("div", null,
                 React.createElement("h1", null, "\uACC4\uC815 \uC815\uBCF4 \uC785\uB825"),
-                React.createElement(semantic_ui_react_1.Container, null,
-                    this.state.user ?
-                        React.createElement("div", null,
-                            React.createElement("h3", null,
-                                "\uC774\uBA54\uC77C: ",
-                                this.state.user ? firebaseConfig_1.auth.currentUser.email : null)) :
-                        React.createElement("div", null,
-                            React.createElement("span", null, "\uC774\uBA54\uC77C"),
-                            React.createElement("input", { id: "email" }),
-                            " ",
-                            React.createElement("br", null),
-                            React.createElement("span", null, "\uBE44\uBC00\uBC88\uD638"),
-                            React.createElement("input", { id: "password" })),
-                    React.createElement("div", null,
-                        React.createElement("span", null, "\uC774\uB984"),
-                        React.createElement("input", { id: "name_input" }),
-                        " ",
-                        React.createElement("br", null),
-                        React.createElement("span", null, "\uC804\uD654\uBC88\uD638"),
-                        React.createElement("input", { id: "phone" }),
-                        " ",
-                        React.createElement("br", null),
-                        React.createElement("span", null, "\uACFC\uC815"),
-                        React.createElement("select", { id: "curriculum" },
-                            React.createElement("option", { value: "default" }, "--\uACFC\uC815\uC744 \uC120\uD0DD\uD558\uC138\uC694--"),
-                            React.createElement("option", { value: "" }, "\uC911\uD615"),
-                            React.createElement("option", { value: "" }, "\uC18C\uD615")))),
-                React.createElement(this.cancelButton, null),
-                React.createElement(this.CreateAccount, null)));
+                React.createElement(semantic_ui_react_1.Form, null,
+                    React.createElement(semantic_ui_react_1.Form.Field, null,
+                        React.createElement("label", null, "\uC774\uBA54\uC77C \uC8FC\uC18C"),
+                        React.createElement(semantic_ui_react_1.Form.Input, { name: INPUT_FIELD_EMAIL, placeholder: 'xxxx@email.com', value: this.state[INPUT_FIELD_EMAIL], onChange: this.onInputChanges })),
+                    React.createElement(semantic_ui_react_1.Form.Field, null,
+                        React.createElement("label", null, "\uBE44\uBC00\uBC88\uD638"),
+                        React.createElement(semantic_ui_react_1.Form.Input, { name: INPUT_FIELD_PASSWD, type: "password", placeholder: '********', value: this.state[INPUT_FIELD_PASSWD], onChange: this.onInputChanges })),
+                    React.createElement(semantic_ui_react_1.Form.Field, null,
+                        React.createElement("label", null, "\uC774\uB984"),
+                        React.createElement(semantic_ui_react_1.Form.Input, { name: INPUT_FIELD_NAME, placeholder: '\uD64D\uAE38\uB3D9', value: this.state[INPUT_FIELD_NAME], onChange: this.onInputChanges })),
+                    React.createElement(semantic_ui_react_1.Form.Field, null,
+                        React.createElement("label", null, "\uC804\uD654\uBC88\uD638"),
+                        React.createElement(semantic_ui_react_1.Form.Input, { name: INPUT_FIELD_PHONE, placeholder: '010XXXXXXXX', value: this.state[INPUT_FIELD_PHONE], onChange: this.onInputChanges })),
+                    React.createElement(semantic_ui_react_1.Form.Field, null,
+                        React.createElement("label", null, "\uACFC\uC815"),
+                        React.createElement(semantic_ui_react_1.Dropdown, { placeholder: "\uACFC\uC815\uC744 \uC120\uD0DD\uD558\uC138\uC694", fluid: true, selection: true, options: [
+                                {
+                                    key: "dropdown_item_course_small",
+                                    text: "소형",
+                                    value: DROPDOWN_COURSE_VALUE_SMALL,
+                                },
+                                {
+                                    key: "dropdown_item_course_middle",
+                                    text: "중형",
+                                    value: DROPDOWN_COURSE_VALUE_MIDDLE,
+                                },
+                            ], onChange: this.onDropdownCourseChanges })),
+                    React.createElement(this.cancelButton, null),
+                    React.createElement(this.CreateAccount, null))));
         };
         this.CreateAccount = () => React.createElement(react_router_dom_1.Route, { render: ({ history }) => React.createElement(semantic_ui_react_1.Button, { onClick: () => {
-                    let _name = document.getElementById("name_input").value;
-                    console.log(_name);
-                    let _phoneNum = document.querySelector('#phone').value;
-                    let _curriculum = document.querySelector('#curriculum').value;
+                    const _name = this.state[INPUT_FIELD_NAME];
+                    const _phoneNum = this.state[INPUT_FIELD_PHONE];
+                    let _curriculum = "";
+                    switch (this.state.selectedDropdownCourseValue) {
+                        case DROPDOWN_COURSE_VALUE_SMALL:
+                            _curriculum = "소형";
+                            break;
+                        case DROPDOWN_COURSE_VALUE_MIDDLE:
+                            _curriculum = "중형";
+                            break;
+                        case 0:
+                            alert("과정을 선택해 주세요!");
+                            return;
+                        default:
+                            alert(`Unkown value for curriculum: ${this.state.selectedDropdownCourseValue}`);
+                            return;
+                    }
                     firebaseConfig_1.auth.onAuthStateChanged(user => {
                         if (user) {
                             this.setState({
@@ -88253,8 +88285,8 @@ class AccountPage extends React.Component {
                             });
                         }
                         else {
-                            let _email = document.querySelector('#email').value;
-                            let _password = document.querySelector('#password').value;
+                            const _email = this.state[INPUT_FIELD_EMAIL];
+                            const _password = this.state[INPUT_FIELD_PASSWD];
                             firebaseConfig_1.auth.createUserWithEmailAndPassword(_email, _password).then(result => {
                                 this.setState({
                                     account: {
@@ -88295,15 +88327,30 @@ class AccountPage extends React.Component {
                 phoneNum: '',
                 curriculum: '',
                 authority: 'student',
-            }
+            },
+            [INPUT_FIELD_EMAIL]: "",
+            [INPUT_FIELD_NAME]: "",
+            [INPUT_FIELD_PASSWD]: "",
+            [INPUT_FIELD_PHONE]: "",
+            selectedDropdownCourseValue: 0,
         };
         this.CreateAccount = this.CreateAccount.bind(this);
         this.cancelButton = this.cancelButton.bind(this);
+        this.onDropdownCourseChanges = this.onDropdownCourseChanges.bind(this);
+        this.onInputChanges = this.onInputChanges.bind(this);
     }
     componentDidMount() {
         firebaseConfig_1.auth.onAuthStateChanged(user => {
             this.setState({ user: user });
         });
+    }
+    onDropdownCourseChanges(event, data) {
+        this.setState({ selectedDropdownCourseValue: Number(data.value) });
+    }
+    onInputChanges(event, data) {
+        const a = this.state;
+        a[data.name] = data.value;
+        this.setState(a);
     }
 }
 exports.AccountPage = AccountPage;
@@ -88321,7 +88368,7 @@ exports.AccountPage = AccountPage;
 "use strict";
 
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.fetchAccount = exports.postAccount = exports.fetchAccountList = void 0;
+exports.deleteAccount = exports.fetchAccount = exports.postAccount = exports.fetchAccountList = void 0;
 const clientConfig_1 = __webpack_require__(/*! ../clientConfig */ "./components/clientConfig.ts");
 const fetchAccountList = (params = {}, cancelToken = null) => {
     return clientConfig_1.instance.get(`/accounts`, {
@@ -88343,6 +88390,12 @@ const fetchAccount = (key, params = {}, cancelToken = null) => {
     });
 };
 exports.fetchAccount = fetchAccount;
+const deleteAccount = (key, cancelToken = null) => {
+    return clientConfig_1.instance.delete(`/accounts/${key}`, {
+        cancelToken
+    });
+};
+exports.deleteAccount = deleteAccount;
 
 
 /***/ }),
@@ -88450,6 +88503,19 @@ class LogIn extends React.Component {
                         });
                     });
                 } }, "Sign in with Google")) });
+        this.SignIn = () => React.createElement(react_router_dom_1.Route, { render: ({ history }) => (React.createElement(semantic_ui_react_1.Button, { onClick: () => {
+                    let _id = document.getElementById('user_email').value;
+                    let _pw = document.getElementById('user_pw').value;
+                    firebaseConfig_1.auth.signInWithEmailAndPassword(_id, _pw).then(result => {
+                        client_1.fetchAccount(result.user.uid).then(response => {
+                            this.setState({
+                                user: result.user,
+                                account: response.data.account,
+                            });
+                            history.push('/');
+                        });
+                    });
+                } }, "Log In")) });
         this.SignOut = () => {
             firebaseConfig_1.auth.signOut().then(() => {
                 this.setState({ user: firebaseConfig_1.auth.currentUser });
@@ -88467,10 +88533,10 @@ class LogIn extends React.Component {
     render() {
         return (React.createElement("div", { className: "LogIn" },
             React.createElement("header", null,
-                this.state.user
+                this.state.account
                     ? React.createElement("p", null,
                         "Hello, ",
-                        this.state.user.displayName)
+                        this.state.account.name)
                     : React.createElement("p", null, "Please sign in."),
                 this.state.user
                     ? React.createElement("button", { onClick: this.SignOut }, "Sign out")
@@ -88482,15 +88548,20 @@ class LogIn extends React.Component {
                         React.createElement(semantic_ui_react_1.Container, null,
                             React.createElement("input", { id: 'user_email' }),
                             React.createElement("input", { id: 'user_pw' }),
-                            React.createElement("button", null, "log in")),
+                            React.createElement(this.SignIn, null)),
                         React.createElement(semantic_ui_react_1.Container, null,
                             React.createElement(semantic_ui_react_1.Button, { as: react_router_dom_1.Link, to: '/login/create account' }, "\uD68C\uC6D0\uAC00\uC785")))));
     }
     componentDidMount() {
         firebaseConfig_1.auth.onAuthStateChanged(user => {
             if (user) {
-                this.setState({ user: user });
-                this.render();
+                client_1.fetchAccount(user.uid).then(result => {
+                    this.setState({
+                        user: user,
+                        account: result.data.account,
+                    });
+                    this.render();
+                });
             }
         });
     }
@@ -88507,7 +88578,11 @@ class LogIn extends React.Component {
                 console.log("no account!");
             }
         }).catch(err => {
-            console.log('account fetch failed');
+            console.log('account fetch failed:', err);
+        });
+    }
+    deleteAccount(keyVal) {
+        client_1.deleteAccount(keyVal).then(result => {
         });
     }
 }
@@ -88749,10 +88824,10 @@ class PartPage extends React.Component {
         console.log("date: ", date);
         return (React.createElement("div", null,
             React.createElement("h2", null, date),
-            React.createElement("h3", null, this.state.user ? login_1.auth.currentUser.displayName : null),
+            React.createElement("h3", null, this.state.account ? this.state.account.name : null),
             React.createElement(semantic_ui_react_1.Container, null,
                 React.createElement(semantic_ui_react_1.Container, null,
-                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('moring') }, "\uC624\uC804")),
+                    React.createElement(semantic_ui_react_1.Button, { onClick: () => this.Reserve('morning') }, "\uC624\uC804")),
                 " ",
                 React.createElement("br", null),
                 React.createElement(semantic_ui_react_1.Container, null,
@@ -88910,13 +88985,16 @@ const my_schedule_element_1 = __webpack_require__(/*! ./my_schedule_element */ "
 class MyScheduleList extends React.Component {
     constructor(props) {
         super(props);
-        this.state = this.getAuth();
+        this.state = {
+            user: null,
+            account: null,
+        };
     }
     render() {
         return (React.createElement("div", null,
             React.createElement("h1", null, "\uB098\uC758 \uC218\uC5C5"),
-            React.createElement("h2", null, this.state.user ?
-                login_1.auth.currentUser.displayName
+            React.createElement("h2", null, this.state.account ?
+                this.state.account.name
                 : "로그인 하십시오."),
             React.createElement(my_schedule_element_1.MyScheduleElement, null)));
     }
@@ -88925,25 +89003,17 @@ class MyScheduleList extends React.Component {
     componentDidMount() {
         login_1.auth.onAuthStateChanged(user => {
             if (user) {
-                console.log(login_1.auth.currentUser);
-                this.setState({ user: login_1.auth.currentUser });
+                login_1.fetchAccount(user.uid).then(result => {
+                    this.setState({
+                        user: user,
+                        account: result.data.account,
+                    });
+                });
             }
             else {
             }
         });
     }
-    getAuth() {
-        let result = { user: null };
-        login_1.auth.onAuthStateChanged(user => {
-            if (user) {
-                result.user = login_1.auth.currentUser;
-            }
-            else {
-            }
-        });
-        return result;
-    }
-    ;
 }
 exports.MyScheduleList = MyScheduleList;
 
@@ -88985,6 +89055,9 @@ class MyScheduleElement extends React.Component {
     componentDidMount() {
         this.FetchList();
     }
+    componentDidUpdate() {
+        this.render();
+    }
     FetchList() {
         login_1.auth.onAuthStateChanged(user => {
             if (user) {
@@ -89003,6 +89076,7 @@ class MyScheduleElement extends React.Component {
                 console.log("cancel schedule");
                 client_1.cancelScheduleOfAccount(user.uid, id);
                 client_1.deleteStudentOfSchedule(date, part, user.uid);
+                this.FetchList();
             }
         });
     }
